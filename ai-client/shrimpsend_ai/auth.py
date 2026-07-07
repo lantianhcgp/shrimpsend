@@ -60,6 +60,7 @@ class AuthManager:
     def _save_token(self) -> None:
         """Save token to config file."""
         token_file = self.config_dir / "auth.json"
+        self.config_dir.mkdir(parents=True, exist_ok=True)
         data = {
             'token': self._token,
             'expiry': self._token_expiry
