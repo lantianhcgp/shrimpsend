@@ -26,14 +26,10 @@ jobs:
         channel: 'stable'
 
     - name: Get dependencies
-      run: cd app && flutter pub get --verbose
-      env:
-        PUB_HOSTED_URL: https://pub.flutter-io.cn
+      run: cd app && flutter pub get
 
     - name: Build APK
-      run: cd app && flutter build apk --release --verbose
-      env:
-        PUB_HOSTED_URL: https://pub.flutter-io.cn
+      run: cd app && flutter build apk --release
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
