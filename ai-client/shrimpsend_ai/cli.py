@@ -6,6 +6,7 @@ ShrimpSend AI Client - Command Line Interface
 import argparse
 import sys
 import json
+from pathlib import Path
 from typing import List, Optional
 
 from .client import ShrimpSendClient
@@ -32,6 +33,7 @@ def main(args: Optional[List[str]] = None) -> int:
     login_parser.add_argument('--server', required=True, help='Server URL')
     login_parser.add_argument('--email', required=True, help='Email address')
     login_parser.add_argument('--password', required=True, help='Password')
+    login_parser.add_argument('--device-id', help='Device ID (optional)')
     
     # Register device command
     register_parser = subparsers.add_parser('register', help='Register as device')
@@ -68,26 +70,35 @@ def main(args: Optional[List[str]] = None) -> int:
         parser.print_help()
         return 1
     
+    # Login command doesn't require existing config
+    if args.command == 'login':
+        client = ShrimpSendClient(
+            server=args.server,
+            config_dir=str(Path.home() / ".shrimpsend-ai")
+        )
+        
+        if client.login(args.email, args.password, device_id=args.device_id):
+            print("Login successful!")
+            # Save config for future use
+            config = {
+                "server": args.server,
+                "email": args.email,
+                "device_id": args.device_id or "ai-client-001"
+            }
+            client.save_config(config)
+            return 0
+        else:
+            print("Login failed!", file=sys.stderr)
+            return 1
+    
+    # All other commands require existing config
     try:
         client = ShrimpSendClient.from_config()
     except FileNotFoundError:
         print("Error: Not logged in. Use 'login' command first.", file=sys.stderr)
         return 1
     
-    if args.command == 'login':
-        client = ShrimpSendClient(
-            server=args.server,
-            config_dir=str(client.config_dir)
-        )
-        
-        if client.login(args.email, args.password):
-            print("Login successful!")
-            return 0
-        else:
-            print("Login failed!", file=sys.stderr)
-            return 1
-    
-    elif args.command == 'register':
+    if args.command == 'register':
         device = client.register_device(
             name=args.name,
             device_type=args.type

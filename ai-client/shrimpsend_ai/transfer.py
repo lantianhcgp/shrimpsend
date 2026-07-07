@@ -5,6 +5,7 @@ ShrimpSend AI Client - Transfer Manager
 import os
 import hashlib
 import uuid
+import time
 from pathlib import Path
 from typing import Optional, Dict, Any, BinaryIO
 import mimetypes
@@ -104,16 +105,26 @@ class TransferManager:
         
         target_device_id = device_info.get('deviceId')
         
-        # Create transfer request
-        url = f"{self.server}/api/transfer/text"
-        payload = {
-            'targetDeviceId': target_device_id,
-            'content': text,
-            'contentType': 'text/plain'
+        # Create message envelope
+        message_envelope = {
+            'type': 'text',
+            'payload': {
+                'text': text,
+                'localId': str(uuid.uuid4())
+            },
+            'fromDeviceId': self.device.get_ai_device_id(),
+            'toDeviceId': target_device_id,
+            'ts': int(time.time() * 1000)
         }
         
         if thread_id:
-            payload['threadId'] = thread_id
+            message_envelope['threadKey'] = thread_id
+        
+        # Send message
+        url = f"{self.server}/api/messages/send"
+        payload = {
+            'data': message_envelope
+        }
         
         response = requests.post(
             url,
@@ -122,8 +133,8 @@ class TransferManager:
             timeout=self.timeout
         )
         
-        if response.status_code == 200:
-            return response.json()
+        if response.status_code in [200, 204]:
+            return {"status": "success"}
         
         raise requests.RequestException(
             f"Failed to send text: {response.status_code}"

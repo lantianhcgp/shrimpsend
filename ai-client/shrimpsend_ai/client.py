@@ -92,18 +92,19 @@ class ShrimpSendClient:
         if token:
             self.auth.set_token(token)
     
-    def login(self, email: str, password: str) -> bool:
+    def login(self, email: str, password: str, device_id: str = None) -> bool:
         """
         Login to ShrimpSend.
         
         Args:
             email: User email
             password: User password
+            device_id: Device ID
             
         Returns:
             True if login successful
         """
-        return self.auth.login(email, password)
+        return self.auth.login(email, password, device_id=device_id)
     
     def register_device(
         self,

@@ -108,13 +108,15 @@ class AuthManager:
         
         return True
     
-    def login(self, email: str, password: str) -> bool:
+    def login(self, email: str, password: str, device_id: str = None, platform: str = "ai_client") -> bool:
         """
         Login to ShrimpSend.
         
         Args:
             email: User email
             password: User password
+            device_id: Device ID
+            platform: Platform name
             
         Returns:
             True if login successful
@@ -128,6 +130,11 @@ class AuthManager:
             'password': password
         }
         
+        if device_id:
+            payload['deviceId'] = device_id
+        if platform:
+            payload['platform'] = platform
+        
         response = requests.post(
             url,
             json=payload,
@@ -136,7 +143,8 @@ class AuthManager:
         
         if response.status_code == 200:
             data = response.json()
-            self._token = data.get('token')
+            # API returns 'accessToken', not 'token'
+            self._token = data.get('accessToken')
             
             # Parse token expiry (if provided)
             expires_in = data.get('expiresIn')

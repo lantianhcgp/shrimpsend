@@ -314,3 +314,16 @@ class DeviceManager:
             List of AI devices
         """
         return self.find_by_type("AI_AGENT")
+    
+    def get_ai_device_id(self) -> str:
+        """
+        Get the first AI device ID.
+        
+        Returns:
+            AI device ID
+        """
+        ai_devices = self.get_ai_devices()
+        if ai_devices:
+            return ai_devices[0].get('deviceId')
+        # Return default if no AI devices found
+        return "ai-client-001"
