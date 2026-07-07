@@ -391,16 +391,27 @@ class TransferManager:
         
         target_device_id = device_info.get('deviceId')
         
-        # Create transfer request
-        url = f"{self.server}/api/transfer/clipboard"
-        payload = {
-            'targetDeviceId': target_device_id,
-            'content': content,
-            'contentType': content_type
+        # Create message envelope
+        message_envelope = {
+            'type': 'clipboard',
+            'payload': {
+                'content': content,
+                'contentType': content_type,
+                'localId': str(uuid.uuid4())
+            },
+            'fromDeviceId': self.device.get_ai_device_id(),
+            'toDeviceId': target_device_id,
+            'ts': int(time.time() * 1000)
         }
         
         if thread_id:
-            payload['threadId'] = thread_id
+            message_envelope['threadKey'] = thread_id
+        
+        # Send message
+        url = f"{self.server}/api/messages/send"
+        payload = {
+            'data': message_envelope
+        }
         
         response = requests.post(
             url,
@@ -409,8 +420,8 @@ class TransferManager:
             timeout=self.timeout
         )
         
-        if response.status_code == 200:
-            return response.json()
+        if response.status_code in [200, 204]:
+            return {"status": "success"}
         
         raise requests.RequestException(
             f"Failed to send clipboard: {response.status_code}"
